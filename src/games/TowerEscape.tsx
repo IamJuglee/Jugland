@@ -1,5 +1,6 @@
 import { FC, useEffect, useRef, useState } from 'react';
 import GameLayout from '../components/GameLayout';
+import TutorialOverlay from '../components/TutorialOverlay';
 
 const WIDTH = 300;
 const HEIGHT = 500;
@@ -18,6 +19,16 @@ const TowerEscape: FC = () => {
   const [score, setScore] = useState(0);
   const [coins, setCoins] = useState(0);
   const [cooldown, setCooldown] = useState(0); // seconds remaining for Q
+  const [showTutorial, setShowTutorial] = useState(true);
+  const [step, setStep] = useState(0);
+
+  const tutorialSteps = [
+    'Tower Escape는 위로 올라가는 점프 게임입니다.',
+    '스페이스바 또는 화면 클릭으로 점프할 수 있어요.',
+    '떨어지는 장애물을 피하세요. 충돌 시 게임 오버!',
+    '코인을 먹으면 점수를 얻고, 스킬을 사용할 수 있어요.',
+    'Q키: 무적 / E키: 초점프 스킬을 사용해보세요.',
+  ];
 
   useEffect(() => {
     if (stage !== 'playing') return;
@@ -181,11 +192,25 @@ const TowerEscape: FC = () => {
     setStage('playing');
   };
 
+  const nextStep = () => {
+    if (step < tutorialSteps.length - 1) {
+      setStep(s => s + 1);
+    } else {
+      setShowTutorial(false);
+      startGame();
+    }
+  };
+
+  const skipTutorial = () => {
+    setShowTutorial(false);
+    startGame();
+  };
+
   return (
     <GameLayout title="Tower Escape">
       <div className="relative flex flex-col items-center">
         <canvas ref={canvasRef} width={WIDTH} height={HEIGHT} className="border" />
-        {stage !== 'playing' && (
+        {stage !== 'playing' && !showTutorial && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-50 text-white">
             {stage === 'start' && (
               <button
@@ -208,11 +233,21 @@ const TowerEscape: FC = () => {
             )}
           </div>
         )}
-        <div className="absolute top-0 left-0 w-full flex justify-between p-2 text-xs text-white bg-black bg-opacity-30">
-          <span>점수: {score}</span>
-          <span>코인: {coins}</span>
-          <span>Q {cooldown ? `쿨 ${cooldown}s` : 'READY'}</span>
-        </div>
+        {showTutorial && (
+          <TutorialOverlay
+            steps={tutorialSteps}
+            step={step}
+            onNext={nextStep}
+            onSkip={skipTutorial}
+          />
+        )}
+        {stage === 'playing' && (
+          <div className="absolute top-0 left-0 w-full flex justify-between p-2 text-xs text-white bg-black bg-opacity-30">
+            <span>점수: {score}</span>
+            <span>코인: {coins}</span>
+            <span>Q {cooldown ? `쿨 ${cooldown}s` : 'READY'}</span>
+          </div>
+        )}
       </div>
     </GameLayout>
   );
